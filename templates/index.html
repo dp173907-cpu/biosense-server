@@ -1,1 +1,65 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BioSense Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="background:#0f172a; color:white; text-align:center;">
+
+<h1>🧠 BioSense</h1>
+<h2 id="state">Loading...</h2>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+<script>
+let labels = [];
+let alphaData = [];
+let betaData = [];
+
+const ctx = document.getElementById('chart').getContext('2d');
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Alpha',
+                data: alphaData,
+                borderColor: 'cyan'
+            },
+            {
+                label: 'Beta',
+                data: betaData,
+                borderColor: 'red'
+            }
+        ]
+    }
+});
+
+setInterval(() => {
+    fetch('/data')
+        .then(res => res.json())
+        .then(data => {
+
+            document.getElementById("state").innerText = data.state;
+
+            labels.push(labels.length);
+            alphaData.push(data.alpha);
+            betaData.push(data.beta);
+
+            if (labels.length > 20) {
+                labels.shift();
+                alphaData.shift();
+                betaData.shift();
+            }
+
+            chart.update();
+        });
+
+}, 1000);
+</script>
+
+</body>
+</html>
