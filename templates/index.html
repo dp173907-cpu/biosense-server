@@ -1,14 +1,17 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>BioSense Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body style="background:#0f172a; color:white; text-align:center;">
 
-<h1>🧠 BioSense</h1>
-<h2 id="state" style="font-size:40px; font-weight:bold;">Loading...</h2>
+<body style="background:#0f172a; color:white; font-family:sans-serif; text-align:center;">
+
+<h1 style="color:#38bdf8;">🧠 BioSense</h1>
+
+<h2 id="state" style="font-size:40px; font-weight:bold;">Stopped</h2>
+
+<h3 id="values">Alpha: 0 | Beta: 0</h3>
 
 <canvas id="chart" width="400" height="200"></canvas>
 
@@ -16,6 +19,7 @@
 let labels = [];
 let alphaData = [];
 let betaData = [];
+let running = false;
 
 const ctx = document.getElementById('chart').getContext('2d');
 
@@ -27,46 +31,64 @@ const chart = new Chart(ctx, {
             {
                 label: 'Alpha',
                 data: alphaData,
-                borderColor: 'cyan'
+                borderColor: 'cyan',
+                tension: 0.4
             },
             {
                 label: 'Beta',
                 data: betaData,
-                borderColor: 'red'
+                borderColor: 'red',
+                tension: 0.4
             }
         ]
+    },
+    options: {
+        animation: false,
+        scales: {
+            x: { display: false },
+            y: { beginAtZero: true }
+        }
     }
 });
 
+// 🔁 LIVE UPDATE
 setInterval(() => {
     fetch('/data')
         .then(res => res.json())
         .then(data => {
 
             let stateEl = document.getElementById("state");
+            let valueEl = document.getElementById("values");
 
-            // 🔥 BIG RESULT DISPLAY
             stateEl.innerText = data.state.toUpperCase();
+            valueEl.innerText = `Alpha: ${data.alpha} | Beta: ${data.beta}`;
 
+            // 🎨 Color
             if (data.state === "Stress") {
                 stateEl.style.color = "red";
+                running = true;
             } else if (data.state === "Relax") {
                 stateEl.style.color = "lightgreen";
+                running = true;
             } else {
-                stateEl.style.color = "white";
+                stateEl.style.color = "gray";
+                running = false;
             }
 
-            labels.push(labels.length);
-            alphaData.push(data.alpha);
-            betaData.push(data.beta);
+            // 📊 Only update graph when running
+            if (running) {
+                labels.push(labels.length);
+                alphaData.push(data.alpha);
+                betaData.push(data.beta);
 
-            if (labels.length > 20) {
-                labels.shift();
-                alphaData.shift();
-                betaData.shift();
+                if (labels.length > 20) {
+                    labels.shift();
+                    alphaData.shift();
+                    betaData.shift();
+                }
+
+                chart.update();
             }
-
-            chart.update();
         });
 
 }, 1000);
