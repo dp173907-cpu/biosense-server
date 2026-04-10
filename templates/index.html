@@ -9,9 +9,9 @@
 
 <h1 style="color:#38bdf8;">🧠 BioSense</h1>
 
-<h2 id="state" style="font-size:40px; font-weight:bold;">Stopped</h2>
+<h2 id="state" style="font-size:42px; font-weight:bold;">Stopped</h2>
 
-<h3 id="values">Alpha: 0 | Beta: 0</h3>
+<h3 id="values" style="margin-bottom:20px;">Alpha: 0 | Beta: 0</h3>
 
 <canvas id="chart" width="400" height="200"></canvas>
 
@@ -19,7 +19,9 @@
 let labels = [];
 let alphaData = [];
 let betaData = [];
-let running = false;
+
+// 🔥 IMPORTANT: use this flag properly
+let isRunning = false;
 
 const ctx = document.getElementById('chart').getContext('2d');
 
@@ -32,21 +34,28 @@ const chart = new Chart(ctx, {
                 label: 'Alpha',
                 data: alphaData,
                 borderColor: 'cyan',
+                borderWidth: 2,
                 tension: 0.4
             },
             {
                 label: 'Beta',
                 data: betaData,
                 borderColor: 'red',
+                borderWidth: 2,
                 tension: 0.4
             }
         ]
     },
     options: {
         animation: false,
+        plugins: {
+            legend: {
+                labels: { color: 'white' }
+            }
+        },
         scales: {
             x: { display: false },
-            y: { beginAtZero: true }
+            y: { ticks: { color: 'white' } }
         }
     }
 });
@@ -60,23 +69,33 @@ setInterval(() => {
             let stateEl = document.getElementById("state");
             let valueEl = document.getElementById("values");
 
-            stateEl.innerText = data.state.toUpperCase();
+            // ✅ SHOW VALUES ALWAYS
             valueEl.innerText = `Alpha: ${data.alpha} | Beta: ${data.beta}`;
 
-            // 🎨 Color
-            if (data.state === "Stress") {
+            // 🎯 STATE HANDLING
+            if (data.state === "Running") {
+                stateEl.innerText = "MONITORING...";
+                stateEl.style.color = "yellow";
+                isRunning = true;
+            }
+            else if (data.state === "Stress") {
+                stateEl.innerText = "STRESS";
                 stateEl.style.color = "red";
-                running = true;
-            } else if (data.state === "Relax") {
+                isRunning = false;
+            }
+            else if (data.state === "Relax") {
+                stateEl.innerText = "RELAX";
                 stateEl.style.color = "lightgreen";
-                running = true;
-            } else {
+                isRunning = false;
+            }
+            else {
+                stateEl.innerText = "STOPPED";
                 stateEl.style.color = "gray";
-                running = false;
+                isRunning = false;
             }
 
-            // 📊 Only update graph when running
-            if (running) {
+            // 📊 ONLY MOVE GRAPH WHEN RUNNING
+            if (isRunning) {
                 labels.push(labels.length);
                 alphaData.push(data.alpha);
                 betaData.push(data.beta);
