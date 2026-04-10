@@ -1,10 +1,21 @@
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, request, render_template_string
 import random
 
 app = Flask(__name__)
 
+# 🔥 GLOBAL STATE
+isMonitoring = False
+
+# 📡 DATA API
 @app.route('/data')
 def data():
+    if not isMonitoring:
+        return jsonify({
+            "alpha": 0,
+            "beta": 0,
+            "state": "Stopped"
+        })
+
     alpha = round(random.uniform(5, 10), 2)
     beta = round(random.uniform(5, 12), 2)
     state = "Stress" if beta > alpha else "Relax"
@@ -15,67 +26,43 @@ def data():
         "state": state
     })
 
-# 🔥 LIVE DASHBOARD
+# ▶ START MONITORING
+@app.route('/start')
+def start():
+    global isMonitoring
+    isMonitoring = True
+    return "Started"
+
+# ⏹ STOP MONITORING
+@app.route('/stop')
+def stop():
+    global isMonitoring
+    isMonitoring = False
+    return "Stopped"
+
+# 🌐 DASHBOARD
 @app.route('/')
 def dashboard():
     return render_template_string("""
-    <!DOCTYPE html>
     <html>
-    <head>
-        <title>BioSense Live Dashboard</title>
-        <style>
-            body {
-                background: #0f172a;
-                color: white;
-                font-family: Arial;
-                text-align: center;
-                padding-top: 50px;
-            }
-            .card {
-                background: #1e293b;
-                padding: 20px;
-                border-radius: 10px;
-                width: 300px;
-                margin: auto;
-                box-shadow: 0 0 10px #000;
-            }
-            h1 { color: #38bdf8; }
-            .stress { color: red; }
-            .relax { color: #22c55e; }
-        </style>
-    </head>
-    <body>
-
-        <div class="card">
-            <h1>🧠 BioSense</h1>
-            <h2 id="state">Loading...</h2>
-            <p id="alpha">Alpha: --</p>
-            <p id="beta">Beta: --</p>
-        </div>
+    <body style="background:#0f172a;color:white;text-align:center;padding-top:50px;">
+        <h1>🧠 BioSense</h1>
+        <h2 id="state">Loading...</h2>
+        <p id="alpha"></p>
+        <p id="beta"></p>
 
         <script>
-            function fetchData() {
-                fetch('/data')
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById("alpha").innerText = "Alpha: " + data.alpha;
-                    document.getElementById("beta").innerText = "Beta: " + data.beta;
-
-                    let stateEl = document.getElementById("state");
-                    stateEl.innerText = data.state;
-
-                    if (data.state === "Stress") {
-                        stateEl.className = "stress";
-                    } else {
-                        stateEl.className = "relax";
-                    }
-                });
-            }
-
-            setInterval(fetchData, 1000);
-            fetchData();
+        function fetchData(){
+            fetch('/data')
+            .then(r=>r.json())
+            .then(d=>{
+                document.getElementById("alpha").innerText = "Alpha: "+d.alpha;
+                document.getElementById("beta").innerText = "Beta: "+d.beta;
+                document.getElementById("state").innerText = d.state;
+            });
+        }
+        setInterval(fetchData,1000);
         </script>
-
     </body>
     </html>
     """)
