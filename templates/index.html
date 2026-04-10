@@ -43,7 +43,18 @@ setInterval(() => {
         .then(res => res.json())
         .then(data => {
 
-            document.getElementById("state").innerText = data.state;
+            let stateEl = document.getElementById("state");
+
+            // 🔥 BIG RESULT DISPLAY
+            stateEl.innerText = data.state.toUpperCase();
+
+            if (data.state === "Stress") {
+                stateEl.style.color = "red";
+            } else if (data.state === "Relax") {
+                stateEl.style.color = "lightgreen";
+            } else {
+                stateEl.style.color = "white";
+            }
 
             labels.push(labels.length);
             alphaData.push(data.alpha);
